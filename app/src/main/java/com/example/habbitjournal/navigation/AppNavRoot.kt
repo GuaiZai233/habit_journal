@@ -1,5 +1,7 @@
 package com.example.habbitjournal.navigation
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -10,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -27,6 +30,20 @@ private enum class RootTab(val route: String, val title: String) {
     HOME("home", "主页"),
     CALENDAR("calendar", "日历"),
     SETTINGS("settings", "设置"),
+}
+
+private fun routeIndex(route: String?): Int {
+    return RootTab.entries.indexOfFirst { it.route == route }.takeIf { it >= 0 } ?: 0
+}
+
+private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideDirection(): AnimatedContentTransitionScope.SlideDirection {
+    val initialIndex = routeIndex(initialState.destination.route)
+    val targetIndex = routeIndex(targetState.destination.route)
+    return if (targetIndex >= initialIndex) {
+        AnimatedContentTransitionScope.SlideDirection.Left
+    } else {
+        AnimatedContentTransitionScope.SlideDirection.Right
+    }
 }
 
 @Composable
@@ -53,19 +70,47 @@ fun AppNavRoot() {
                     )
                 }
             }
-        }
+        },
     ) { padding ->
         NavHost(
             navController = navController,
             startDestination = RootTab.HOME.route,
             modifier = Modifier.padding(padding),
         ) {
-            composable(RootTab.HOME.route) {
+            composable(
+                route = RootTab.HOME.route,
+                enterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                exitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popEnterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popExitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+            ) {
                 val vm: HomeViewModel = hiltViewModel()
                 val uiState = vm.uiState.collectAsStateWithLifecycle()
                 HomeScreen(uiState = uiState.value, onAddTodayLog = vm::addTodayLog)
             }
-            composable(RootTab.CALENDAR.route) {
+            composable(
+                route = RootTab.CALENDAR.route,
+                enterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                exitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popEnterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popExitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+            ) {
                 val vm: CalendarViewModel = hiltViewModel()
                 val uiState = vm.uiState.collectAsStateWithLifecycle()
                 CalendarScreen(
@@ -74,7 +119,21 @@ fun AppNavRoot() {
                     onNextMonth = vm::nextMonth,
                 )
             }
-            composable(RootTab.SETTINGS.route) {
+            composable(
+                route = RootTab.SETTINGS.route,
+                enterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                exitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popEnterTransition = {
+                    slideIntoContainer(slideDirection(), animationSpec = tween(280))
+                },
+                popExitTransition = {
+                    slideOutOfContainer(slideDirection(), animationSpec = tween(280))
+                },
+            ) {
                 val vm: SettingsViewModel = hiltViewModel()
                 val uiState = vm.uiState.collectAsStateWithLifecycle()
                 SettingsScreen(
