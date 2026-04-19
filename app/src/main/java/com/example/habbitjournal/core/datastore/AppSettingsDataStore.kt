@@ -24,7 +24,7 @@ class AppSettingsDataStore @Inject constructor(
     }
 
     val githubUrl: Flow<String> = context.appSettingsDataStore.data.map { prefs ->
-        prefs[githubUrlKey] ?: "https://github.com/"
+        prefs[githubUrlKey] ?: "https://github.com/GuaiZai233/habit_journal"
     }
 
     suspend fun setServerUrl(url: String) {
@@ -39,3 +39,4 @@ class AppSettingsDataStore @Inject constructor(
         }
     }
 }
+
