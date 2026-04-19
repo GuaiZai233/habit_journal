@@ -76,7 +76,8 @@ fun SettingsScreen(
             Text(uiState.csvContent, style = MaterialTheme.typography.bodySmall)
         }
 
-        Text("开源许可证：Apache-2.0")
+        Text("开源许可证：MPL-2.0")
         Text("GitHub：${uiState.githubUrl}")
     }
 }
+
