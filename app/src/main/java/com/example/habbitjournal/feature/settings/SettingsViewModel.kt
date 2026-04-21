@@ -35,43 +35,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun checkServerHealth(url: String) {
-        val normalizedUrl = normalizeUrl(url)
-        if (normalizedUrl.isBlank()) {
-            _uiState.update {
-                it.copy(
-                    serverHealthMessage = "请先输入服务器地址",
-                    serverSaveMessage = "",
-                    serverSaveSucceeded = null,
-                )
-            }
-            return
-        }
-
-        viewModelScope.launch {
-            try {
-                syncApiClient.checkHealth(normalizedUrl)
-                _uiState.update {
-                    it.copy(
-                        serverHealthMessage = "健康检查通过：$normalizedUrl",
-                        serverSaveMessage = "",
-                        serverSaveSucceeded = null,
-                    )
-                }
-            } catch (e: Exception) {
-                val error = formatError(e)
-                Log.e(TAG, "Health check failed for $normalizedUrl: $error", e)
-                _uiState.update {
-                    it.copy(
-                        serverHealthMessage = "健康检查失败：$error",
-                        serverSaveMessage = "",
-                        serverSaveSucceeded = null,
-                    )
-                }
-            }
-        }
-    }
-
     fun saveServerUrl(url: String) {
         val normalizedUrl = normalizeUrl(url)
         if (normalizedUrl.isBlank()) {
@@ -79,9 +42,7 @@ class SettingsViewModel @Inject constructor(
                 it.copy(
                     serverSaveMessage = "保存失败：服务器地址不能为空",
                     serverSaveSucceeded = false,
-                    serverHealthMessage = "",
-                    serverSaveDialogState = ServerSaveDialogState.ERROR,
-                    serverSaveDialogMessage = "服务器地址不能为空",
+                    isSavingServer = false,
                 )
             }
             return
@@ -89,10 +50,9 @@ class SettingsViewModel @Inject constructor(
 
         _uiState.update {
             it.copy(
-                serverSaveDialogState = ServerSaveDialogState.CHECKING,
-                serverSaveDialogMessage = "检查服务可达性...",
                 serverSaveMessage = "",
                 serverSaveSucceeded = null,
+                isSavingServer = true,
             )
         }
 
@@ -102,11 +62,9 @@ class SettingsViewModel @Inject constructor(
                 settingsDataStore.setServerUrl(normalizedUrl)
                 _uiState.update {
                     it.copy(
-                        serverSaveDialogState = ServerSaveDialogState.SUCCESS,
-                        serverSaveDialogMessage = "验证通过",
                         serverSaveMessage = "保存成功",
                         serverSaveSucceeded = true,
-                        serverHealthMessage = "健康检查通过：$normalizedUrl",
+                        isSavingServer = false,
                     )
                 }
             } catch (e: Exception) {
@@ -114,22 +72,12 @@ class SettingsViewModel @Inject constructor(
                 Log.e(TAG, "Save server url failed for $normalizedUrl: $error", e)
                 _uiState.update {
                     it.copy(
-                        serverSaveDialogState = ServerSaveDialogState.ERROR,
-                        serverSaveDialogMessage = error,
                         serverSaveMessage = "保存失败：$error",
                         serverSaveSucceeded = false,
+                        isSavingServer = false,
                     )
                 }
             }
-        }
-    }
-
-    fun dismissServerSaveDialog() {
-        _uiState.update {
-            it.copy(
-                serverSaveDialogState = ServerSaveDialogState.HIDDEN,
-                serverSaveDialogMessage = "",
-            )
         }
     }
 

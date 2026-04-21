@@ -12,17 +12,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,8 +48,6 @@ private val SaveSuccessGreen = Color(0xFF2E7D32)
 fun SettingsScreen(
     uiState: SettingsUiState,
     onSaveServerUrl: (String) -> Unit,
-    onCheckServerHealth: (String) -> Unit,
-    onDismissServerSaveDialog: () -> Unit,
     onSyncNow: () -> Unit,
     onExportCsv: () -> Unit,
 ) {
@@ -58,14 +55,6 @@ fun SettingsScreen(
 
     BackHandler(enabled = selectedSection != null) {
         selectedSection = null
-    }
-
-    if (uiState.serverSaveDialogState != ServerSaveDialogState.HIDDEN) {
-        ServerSaveResultDialog(
-            state = uiState.serverSaveDialogState,
-            message = uiState.serverSaveDialogMessage,
-            onDismiss = onDismissServerSaveDialog,
-        )
     }
 
     if (selectedSection == null) {
@@ -98,16 +87,25 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
-                Button(onClick = { onCheckServerHealth(serverUrl) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("检测健康性")
-                }
-                if (uiState.serverHealthMessage.isNotBlank()) {
-                    Text(uiState.serverHealthMessage, style = MaterialTheme.typography.bodyMedium)
+
+                Button(
+                    onClick = { onSaveServerUrl(serverUrl) },
+                    enabled = !uiState.isSavingServer,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (uiState.isSavingServer) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White,
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("检测连通性...")
+                    } else {
+                        Text("确认")
+                    }
                 }
 
-                Button(onClick = { onSaveServerUrl(serverUrl) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("保存服务器地址")
-                }
                 if (uiState.serverSaveMessage.isNotBlank()) {
                     val color = when (uiState.serverSaveSucceeded) {
                         true -> SaveSuccessGreen
@@ -149,56 +147,6 @@ fun SettingsScreen(
             null -> Unit
         }
     }
-}
-
-@Composable
-private fun ServerSaveResultDialog(
-    state: ServerSaveDialogState,
-    message: String,
-    onDismiss: () -> Unit,
-) {
-    val canDismiss = state != ServerSaveDialogState.CHECKING
-
-    AlertDialog(
-        onDismissRequest = { if (canDismiss) onDismiss() },
-        title = { Text("保存服务器地址") },
-        text = {
-            when (state) {
-                ServerSaveDialogState.CHECKING -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        CircularProgressIndicator(modifier = Modifier.width(24.dp))
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("检查服务可达性...")
-                    }
-                }
-
-                ServerSaveDialogState.SUCCESS -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("✓", color = SaveSuccessGreen, style = MaterialTheme.typography.headlineSmall)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("验证通过")
-                    }
-                }
-
-                ServerSaveDialogState.ERROR -> {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("✕", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.headlineSmall)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(message)
-                    }
-                }
-
-                ServerSaveDialogState.HIDDEN -> Unit
-            }
-        },
-        confirmButton = {
-            if (canDismiss) {
-                TextButton(onClick = onDismiss) {
-                    Text("确定")
-                }
-            }
-        },
-    )
 }
 
 @Composable
