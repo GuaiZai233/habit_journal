@@ -42,6 +42,7 @@ private const val PROJECT_GITHUB_URL = "https://github.com/GuaiZai233/habit_jour
 fun SettingsScreen(
     uiState: SettingsUiState,
     onSaveServerUrl: (String) -> Unit,
+    onCheckServerHealth: (String) -> Unit,
     onSyncNow: () -> Unit,
     onExportCsv: () -> Unit,
 ) {
@@ -81,8 +82,18 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
+                Button(onClick = { onCheckServerHealth(serverUrl) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("检测健康性")
+                }
+                if (uiState.serverHealthMessage.isNotBlank()) {
+                    Text(uiState.serverHealthMessage, style = MaterialTheme.typography.bodyMedium)
+                }
+
                 Button(onClick = { onSaveServerUrl(serverUrl) }, modifier = Modifier.fillMaxWidth()) {
                     Text("保存服务器地址")
+                }
+                if (uiState.serverSaveMessage.isNotBlank()) {
+                    Text(uiState.serverSaveMessage, style = MaterialTheme.typography.bodyMedium)
                 }
             }
 
