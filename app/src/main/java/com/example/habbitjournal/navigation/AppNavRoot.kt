@@ -153,6 +153,7 @@ fun AppNavRoot() {
                     uiState = uiState.value,
                     onSaveServerUrl = vm::saveServerUrl,
                     onCheckServerHealth = vm::checkServerHealth,
+                    onDismissServerSaveDialog = vm::dismissServerSaveDialog,
                     onSyncNow = vm::syncNow,
                     onExportCsv = vm::exportCsv,
                 )

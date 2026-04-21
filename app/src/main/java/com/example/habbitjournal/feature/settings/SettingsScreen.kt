@@ -7,17 +7,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +31,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -37,12 +43,14 @@ private enum class SettingsSection {
 }
 
 private const val PROJECT_GITHUB_URL = "https://github.com/GuaiZai233/habit_journal"
+private val SaveSuccessGreen = Color(0xFF2E7D32)
 
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
     onSaveServerUrl: (String) -> Unit,
     onCheckServerHealth: (String) -> Unit,
+    onDismissServerSaveDialog: () -> Unit,
     onSyncNow: () -> Unit,
     onExportCsv: () -> Unit,
 ) {
@@ -50,6 +58,14 @@ fun SettingsScreen(
 
     BackHandler(enabled = selectedSection != null) {
         selectedSection = null
+    }
+
+    if (uiState.serverSaveDialogState != ServerSaveDialogState.HIDDEN) {
+        ServerSaveResultDialog(
+            state = uiState.serverSaveDialogState,
+            message = uiState.serverSaveDialogMessage,
+            onDismiss = onDismissServerSaveDialog,
+        )
     }
 
     if (selectedSection == null) {
@@ -93,7 +109,16 @@ fun SettingsScreen(
                     Text("保存服务器地址")
                 }
                 if (uiState.serverSaveMessage.isNotBlank()) {
-                    Text(uiState.serverSaveMessage, style = MaterialTheme.typography.bodyMedium)
+                    val color = when (uiState.serverSaveSucceeded) {
+                        true -> SaveSuccessGreen
+                        false -> MaterialTheme.colorScheme.error
+                        null -> MaterialTheme.colorScheme.onSurface
+                    }
+                    Text(
+                        uiState.serverSaveMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = color,
+                    )
                 }
             }
 
@@ -124,6 +149,56 @@ fun SettingsScreen(
             null -> Unit
         }
     }
+}
+
+@Composable
+private fun ServerSaveResultDialog(
+    state: ServerSaveDialogState,
+    message: String,
+    onDismiss: () -> Unit,
+) {
+    val canDismiss = state != ServerSaveDialogState.CHECKING
+
+    AlertDialog(
+        onDismissRequest = { if (canDismiss) onDismiss() },
+        title = { Text("保存服务器地址") },
+        text = {
+            when (state) {
+                ServerSaveDialogState.CHECKING -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.width(24.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("检查服务可达性...")
+                    }
+                }
+
+                ServerSaveDialogState.SUCCESS -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("✓", color = SaveSuccessGreen, style = MaterialTheme.typography.headlineSmall)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text("验证通过")
+                    }
+                }
+
+                ServerSaveDialogState.ERROR -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("✕", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.headlineSmall)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(message)
+                    }
+                }
+
+                ServerSaveDialogState.HIDDEN -> Unit
+            }
+        },
+        confirmButton = {
+            if (canDismiss) {
+                TextButton(onClick = onDismiss) {
+                    Text("确定")
+                }
+            }
+        },
+    )
 }
 
 @Composable
