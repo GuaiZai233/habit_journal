@@ -6,6 +6,8 @@
         android:name=".app.HabbitJournalApp"
         android:allowBackup="true"
         android:label="Habbit Journal"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity
@@ -19,4 +21,3 @@
     </application>
 
 </manifest>
-
