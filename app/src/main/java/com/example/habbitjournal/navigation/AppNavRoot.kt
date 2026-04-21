@@ -151,12 +151,12 @@ fun AppNavRoot() {
                 val uiState = vm.uiState.collectAsStateWithLifecycle()
                 SettingsScreen(
                     uiState = uiState.value,
-                    onSaveServerUrl = vm::saveServerUrl,
-                    onSaveGithubUrl = vm::saveGithubUrl,
-                    onSyncNow = vm::syncNow,
+                    onSaveServerUrl = vm::saveServerUrl,                    onSyncNow = vm::syncNow,
                     onExportCsv = vm::exportCsv,
                 )
             }
         }
     }
 }
+
+

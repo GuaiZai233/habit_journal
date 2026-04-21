@@ -17,14 +17,9 @@ class AppSettingsDataStore @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     private val serverUrlKey = stringPreferencesKey("server_url")
-    private val githubUrlKey = stringPreferencesKey("github_url")
 
     val serverUrl: Flow<String> = context.appSettingsDataStore.data.map { prefs ->
         prefs[serverUrlKey] ?: ""
-    }
-
-    val githubUrl: Flow<String> = context.appSettingsDataStore.data.map { prefs ->
-        prefs[githubUrlKey] ?: "https://github.com/GuaiZai233/habit_journal"
     }
 
     suspend fun setServerUrl(url: String) {
@@ -32,11 +27,4 @@ class AppSettingsDataStore @Inject constructor(
             prefs[serverUrlKey] = url.trim().trimEnd('/')
         }
     }
-
-    suspend fun setGithubUrl(url: String) {
-        context.appSettingsDataStore.edit { prefs ->
-            prefs[githubUrlKey] = url.trim()
-        }
-    }
 }
-

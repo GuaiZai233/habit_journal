@@ -36,11 +36,12 @@ private enum class SettingsSection {
     ABOUT,
 }
 
+private const val PROJECT_GITHUB_URL = "https://github.com/GuaiZai233/habit_journal"
+
 @Composable
 fun SettingsScreen(
     uiState: SettingsUiState,
     onSaveServerUrl: (String) -> Unit,
-    onSaveGithubUrl: (String) -> Unit,
     onSyncNow: () -> Unit,
     onExportCsv: () -> Unit,
 ) {
@@ -72,7 +73,6 @@ fun SettingsScreen(
         when (selectedSection) {
             SettingsSection.SERVER -> {
                 var serverUrl by remember(uiState.serverUrl) { mutableStateOf(uiState.serverUrl) }
-                var githubUrl by remember(uiState.githubUrl) { mutableStateOf(uiState.githubUrl) }
 
                 OutlinedTextField(
                     value = serverUrl,
@@ -83,17 +83,6 @@ fun SettingsScreen(
                 )
                 Button(onClick = { onSaveServerUrl(serverUrl) }, modifier = Modifier.fillMaxWidth()) {
                     Text("保存服务器地址")
-                }
-
-                OutlinedTextField(
-                    value = githubUrl,
-                    onValueChange = { githubUrl = it },
-                    label = { Text("GitHub 地址") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-                Button(onClick = { onSaveGithubUrl(githubUrl) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("保存 GitHub 地址")
                 }
             }
 
@@ -118,7 +107,7 @@ fun SettingsScreen(
 
             SettingsSection.ABOUT -> {
                 Text("开源许可证：MPL-2.0")
-                Text("GitHub：${uiState.githubUrl}")
+                Text("GitHub：$PROJECT_GITHUB_URL")
             }
 
             null -> Unit
@@ -144,7 +133,7 @@ private fun SettingsMenu(
 
         SettingsMenuCard(
             title = "服务器设置",
-            description = "配置服务器地址和 GitHub 项目地址",
+            description = "配置服务器地址",
             onClick = onOpenServer,
         )
         SettingsMenuCard(

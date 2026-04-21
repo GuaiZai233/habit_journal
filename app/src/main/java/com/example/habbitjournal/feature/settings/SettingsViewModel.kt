@@ -8,7 +8,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -23,10 +22,8 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(settingsDataStore.serverUrl, settingsDataStore.githubUrl) { server, github ->
-                server to github
-            }.collect { (server, github) ->
-                _uiState.update { it.copy(serverUrl = server, githubUrl = github) }
+            settingsDataStore.serverUrl.collect { server ->
+                _uiState.update { it.copy(serverUrl = server) }
             }
         }
     }
@@ -34,12 +31,6 @@ class SettingsViewModel @Inject constructor(
     fun saveServerUrl(url: String) {
         viewModelScope.launch {
             settingsDataStore.setServerUrl(url)
-        }
-    }
-
-    fun saveGithubUrl(url: String) {
-        viewModelScope.launch {
-            settingsDataStore.setGithubUrl(url)
         }
     }
 
