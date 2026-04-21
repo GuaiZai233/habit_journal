@@ -14,6 +14,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "habbit_journal"
+rootProject.name = "habit_journal"
 include(":app")
+
 

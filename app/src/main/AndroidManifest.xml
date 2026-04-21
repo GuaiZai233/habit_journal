@@ -7,7 +7,7 @@
         android:allowBackup="true"
         android:label="Habbit Journal"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -19,3 +19,4 @@
     </application>
 
 </manifest>
+
