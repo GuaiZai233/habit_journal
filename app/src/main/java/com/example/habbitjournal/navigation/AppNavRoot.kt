@@ -148,6 +148,12 @@ fun AppNavRoot() {
                     uiState = uiState.value,
                     onPrevMonth = vm::previousMonth,
                     onNextMonth = vm::nextMonth,
+                    onDayClick = vm::selectDate,
+                    onClearSelection = vm::clearSelection,
+                    onIncreaseCount = vm::increaseCount,
+                    onDecreaseCount = vm::decreaseCount,
+                    onUpdateCount = vm::updateCountValue,
+                    onSaveCount = vm::saveCount,
                 )
             }
             composable(

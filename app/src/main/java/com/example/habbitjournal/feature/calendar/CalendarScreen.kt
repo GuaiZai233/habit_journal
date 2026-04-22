@@ -7,6 +7,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,17 +18,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.YearMonth
 
 private val WeekLabels = listOf("日", "一", "二", "三", "四", "五", "六")
@@ -37,6 +45,12 @@ fun CalendarScreen(
     uiState: CalendarUiState,
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
+    onDayClick: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onIncreaseCount: () -> Unit,
+    onDecreaseCount: () -> Unit,
+    onUpdateCount: (Int) -> Unit,
+    onSaveCount: () -> Unit,
 ) {
     val placeholderCellColor = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
         Color(0xFF2B2E34)
@@ -79,11 +93,28 @@ fun CalendarScreen(
                 )).using(SizeTransform(clip = false))
             },
             label = "calendar-month-switch",
+            modifier = Modifier.weight(1f),
         ) { month ->
             MonthGrid(
                 month = month,
                 dailyCount = uiState.dailyCount,
                 placeholderColor = placeholderCellColor,
+                onDayClick = onDayClick,
+            )
+        }
+
+        if (uiState.selectedDate != null) {
+            SelectedDateEditor(
+                selectedDate = uiState.selectedDate,
+                count = uiState.selectedDateCount,
+                onIncreaseCount = onIncreaseCount,
+                onDecreaseCount = onDecreaseCount,
+                onUpdateCount = onUpdateCount,
+                onSaveCount = {
+                    onSaveCount()
+                    onClearSelection()
+                },
+                onCancel = onClearSelection,
             )
         }
     }
@@ -94,6 +125,7 @@ private fun MonthGrid(
     month: YearMonth,
     dailyCount: Map<Int, Int>,
     placeholderColor: Color,
+    onDayClick: (Int) -> Unit,
 ) {
     val weekRows = buildWeekRows(month)
 
@@ -106,6 +138,7 @@ private fun MonthGrid(
                         day = day,
                         count = count,
                         placeholderColor = placeholderColor,
+                        onDayClick = { if (day != null) onDayClick(day) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -119,13 +152,15 @@ private fun DayCell(
     day: Int?,
     count: Int,
     placeholderColor: Color,
+    onDayClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(
         modifier = modifier
             .size(44.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(if (day == null) placeholderColor else MaterialTheme.colorScheme.surfaceVariant),
+            .background(if (day == null) placeholderColor else MaterialTheme.colorScheme.surfaceVariant)
+            .then(if (day != null) Modifier.clickable { onDayClick() } else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         if (day != null) {
@@ -165,4 +200,81 @@ private fun buildWeekRows(month: YearMonth): List<List<Int?>> {
 
 private fun sundayBasedIndex(dayOfWeek: DayOfWeek): Int {
     return dayOfWeek.value % 7
+}
+
+@Composable
+private fun SelectedDateEditor(
+    selectedDate: LocalDate,
+    count: Int,
+    onIncreaseCount: () -> Unit,
+    onDecreaseCount: () -> Unit,
+    onUpdateCount: (Int) -> Unit,
+    onSaveCount: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val countText = remember { mutableStateOf(count.toString()) }
+
+    LaunchedEffect(count) {
+        countText.value = count.toString()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "编辑日期：$selectedDate",
+            style = MaterialTheme.typography.titleMedium,
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Button(onClick = onDecreaseCount) {
+                Text("−")
+            }
+
+            OutlinedTextField(
+                value = countText.value,
+                onValueChange = { newValue ->
+                    countText.value = newValue
+                    newValue.toIntOrNull()?.let { onUpdateCount(it) }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 16.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+            )
+
+            Button(onClick = onIncreaseCount) {
+                Text("+")
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Button(
+                onClick = onCancel,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("取消")
+            }
+            Button(
+                onClick = onSaveCount,
+                modifier = Modifier.weight(1f),
+            ) {
+                Text("保存")
+            }
+        }
+    }
 }

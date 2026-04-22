@@ -47,6 +47,20 @@ class GoodHabitRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun updateLogCount(date: LocalDate, count: Int) {
+        val dateStr = date.format(DateTimeFormatter.ISO_DATE)
+        val now = Instant.now().toString()
+        dao.upsert(
+            GoodHabitLogEntity(
+                recordDate = dateStr,
+                count = count,
+                updatedAt = now,
+                syncState = SyncState.PENDING.name,
+                deletedAt = null,
+            )
+        )
+    }
+
     override suspend fun exportCsv(): String {
         val logs = dao.listAll()
         val header = "record_date,count,updated_at,sync_state"
