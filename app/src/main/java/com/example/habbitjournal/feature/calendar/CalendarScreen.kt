@@ -1,5 +1,11 @@
 package com.example.habbitjournal.feature.calendar
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,13 +20,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import java.time.DayOfWeek
+import java.time.YearMonth
 
 private val WeekLabels = listOf("日", "一", "二", "三", "四", "五", "六")
 
@@ -30,14 +36,6 @@ fun CalendarScreen(
     onPrevMonth: () -> Unit,
     onNextMonth: () -> Unit,
 ) {
-    val daysInMonth = uiState.month.lengthOfMonth()
-    val firstDay = uiState.month.atDay(1).dayOfWeek
-    val leadingEmpty = sundayBasedIndex(firstDay)
-    val baseCells = List(leadingEmpty) { null } + (1..daysInMonth).toList()
-    val totalCells = if (baseCells.size <= 35) 35 else 42
-    val paddedCells = baseCells + List(totalCells - baseCells.size) { null }
-    val weekRows = paddedCells.chunked(7)
-
     val placeholderCellColor = if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
         Color(0xFF2B2E34)
     } else {
@@ -64,18 +62,50 @@ fun CalendarScreen(
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            weekRows.forEach { week ->
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    week.forEach { day ->
-                        val count = if (day != null) uiState.dailyCount[day] ?: 0 else 0
-                        DayCell(
-                            day = day,
-                            count = count,
-                            placeholderColor = placeholderCellColor,
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+        AnimatedContent(
+            targetState = uiState.month,
+            transitionSpec = {
+                val forward = targetState > initialState
+                val enterFrom = if (forward) 1 else -1
+                val exitTo = if (forward) -1 else 1
+                (slideInHorizontally(
+                    animationSpec = tween(280),
+                    initialOffsetX = { fullWidth -> fullWidth * enterFrom },
+                ) togetherWith slideOutHorizontally(
+                    animationSpec = tween(280),
+                    targetOffsetX = { fullWidth -> fullWidth * exitTo },
+                )).using(SizeTransform(clip = false))
+            },
+            label = "calendar-month-switch",
+        ) { month ->
+            MonthGrid(
+                month = month,
+                dailyCount = uiState.dailyCount,
+                placeholderColor = placeholderCellColor,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MonthGrid(
+    month: YearMonth,
+    dailyCount: Map<Int, Int>,
+    placeholderColor: Color,
+) {
+    val weekRows = buildWeekRows(month)
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        weekRows.forEach { week ->
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                week.forEach { day ->
+                    val count = if (day != null) dailyCount[day] ?: 0 else 0
+                    DayCell(
+                        day = day,
+                        count = count,
+                        placeholderColor = placeholderColor,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }
@@ -118,6 +148,16 @@ private fun DayCell(
             }
         }
     }
+}
+
+private fun buildWeekRows(month: YearMonth): List<List<Int?>> {
+    val daysInMonth = month.lengthOfMonth()
+    val firstDay = month.atDay(1).dayOfWeek
+    val leadingEmpty = sundayBasedIndex(firstDay)
+    val baseCells = List(leadingEmpty) { null } + (1..daysInMonth).toList()
+    val totalCells = if (baseCells.size <= 35) 35 else 42
+    val paddedCells = baseCells + List(totalCells - baseCells.size) { null }
+    return paddedCells.chunked(7)
 }
 
 private fun sundayBasedIndex(dayOfWeek: DayOfWeek): Int {
