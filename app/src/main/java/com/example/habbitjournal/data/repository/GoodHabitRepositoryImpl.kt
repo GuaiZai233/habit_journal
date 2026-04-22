@@ -25,6 +25,13 @@ class GoodHabitRepositoryImpl @Inject constructor(
         return dao.observeLatestLog().map { it?.toDomain() }
     }
 
+    override fun observeTodayLog(): Flow<GoodHabitLog?> {
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_DATE)
+        return dao.observeLogsInRange(today, today).map { list ->
+            list.firstOrNull()?.toDomain()
+        }
+    }
+
     override fun observeMonthLogs(month: YearMonth): Flow<List<GoodHabitLog>> {
         val start = month.atDay(1).format(DateTimeFormatter.ISO_DATE)
         val end = month.atEndOfMonth().format(DateTimeFormatter.ISO_DATE)

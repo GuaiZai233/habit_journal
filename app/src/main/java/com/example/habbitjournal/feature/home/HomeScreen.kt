@@ -34,10 +34,10 @@ fun HomeScreen(
     ) {
         Card(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("好习惯日志", style = MaterialTheme.typography.titleLarge)
+                Text("好习惯日志", style = MaterialTheme.typography.titleSmall)
+                Text("今日已好习惯 ${uiState.todayCount} 次", style = MaterialTheme.typography.headlineLarge)
                 val dayText = uiState.daysSinceLast?.toString() ?: "-"
-                Text("距离上次好习惯已过 $dayText 天", style = MaterialTheme.typography.headlineSmall)
-                Text("最近记录日期：${uiState.lastRecordDateText}")
+                Text("距离上次好习惯已过 $dayText 天", style = MaterialTheme.typography.bodyMedium)
             }
         }
         Button(onClick = onAddTodayLog, modifier = Modifier.fillMaxWidth()) {

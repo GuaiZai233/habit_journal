@@ -25,6 +25,11 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            repository.observeTodayLog().collect { today ->
+                _uiState.update { it.copy(todayCount = today?.count ?: 0) }
+            }
+        }
+        viewModelScope.launch {
             repository.observeLatestLog().collect { latest ->
                 if (latest == null) {
                     _uiState.update {

@@ -7,6 +7,7 @@ import java.time.YearMonth
 
 interface GoodHabitRepository {
     fun observeLatestLog(): Flow<GoodHabitLog?>
+    fun observeTodayLog(): Flow<GoodHabitLog?>
     fun observeMonthLogs(month: YearMonth): Flow<List<GoodHabitLog>>
     suspend fun addTodayLog()
     suspend fun updateLogCount(date: LocalDate, count: Int)
