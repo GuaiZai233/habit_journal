@@ -110,31 +110,40 @@ fun CalendarScreen(
             )
         }
 
-        val showEditor = uiState.selectedDate != null
-        var editorDate by remember { mutableStateOf(LocalDate.now()) }
-        var editorCount by remember { mutableStateOf(0) }
-        
-        LaunchedEffect(uiState.selectedDate, uiState.selectedDateCount) {
-            if (uiState.selectedDate != null) {
-                editorDate = uiState.selectedDate
-                editorCount = uiState.selectedDateCount
+        AnimatedContent(
+            targetState = uiState.selectedDate,
+            transitionSpec = {
+                if (targetState == null) {
+                    // 面板关闭：向下滑出
+                    fadeIn() togetherWith slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                } else {
+                    // 只要有选中日期（打开或切换），都执行从下往上弹出，旧的向下滑出
+                    (slideInVertically(initialOffsetY = { it }) + fadeIn()) togetherWith 
+                    (slideOutVertically(targetOffsetY = { it }) + fadeOut())
+                }
+            },
+            label = "editor-anim",
+        ) { date ->
+            if (date != null) {
+                // 缓存最新打开的值，防止在关闭动画中计数器突然清零或错位
+                var cachedCount by remember { mutableStateOf(uiState.selectedDateCount) }
+                if (date == uiState.selectedDate) {
+                    cachedCount = uiState.selectedDateCount
+                }
+                
+                SelectedDateEditor(
+                    selectedDate = date,
+                    count = cachedCount,
+                    onIncreaseCount = onIncreaseCount,
+                    onDecreaseCount = onDecreaseCount,
+                    onUpdateCount = onUpdateCount,
+                    onSaveCount = onSaveCount,
+                    onCancel = onClearSelection,
+                )
+            } else {
+                // 空状态，用于动画过渡时占位
+                Box(Modifier.fillMaxWidth())
             }
-        }
-
-        AnimatedVisibility(
-            visible = showEditor,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
-        ) {
-            SelectedDateEditor(
-                selectedDate = editorDate,
-                count = if (showEditor) uiState.selectedDateCount else editorCount,
-                onIncreaseCount = onIncreaseCount,
-                onDecreaseCount = onDecreaseCount,
-                onUpdateCount = onUpdateCount,
-                onSaveCount = onSaveCount,
-                onCancel = onClearSelection,
-            )
         }
     }
 }
