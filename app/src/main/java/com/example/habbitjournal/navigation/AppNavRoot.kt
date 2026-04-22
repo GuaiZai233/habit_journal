@@ -7,6 +7,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -14,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -31,10 +37,10 @@ import com.example.habbitjournal.feature.settings.SettingsScreen
 import com.example.habbitjournal.feature.settings.SettingsViewModel
 import kotlin.math.abs
 
-private enum class RootTab(val route: String, val title: String) {
-    HOME("home", "主页"),
-    CALENDAR("calendar", "日历"),
-    SETTINGS("settings", "设置"),
+private enum class RootTab(val route: String, val title: String, val icon: ImageVector) {
+    HOME("home", "主页", Icons.Filled.Home),
+    CALENDAR("calendar", "日历", Icons.Filled.CalendarMonth),
+    SETTINGS("settings", "设置", Icons.Filled.Settings),
 }
 
 private fun routeIndex(route: String?): Int {
@@ -103,7 +109,7 @@ fun AppNavRoot() {
                             }
                         },
                         label = { Text(tab.title) },
-                        icon = { Text(tab.title.take(1)) },
+                        icon = { Icon(imageVector = tab.icon, contentDescription = tab.title) },
                     )
                 }
             }
