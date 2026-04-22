@@ -37,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -44,10 +45,37 @@ private enum class SettingsSection {
     SERVER,
     EXPORT,
     ABOUT,
+    LICENSES,
 }
 
 private const val PROJECT_GITHUB_URL = "https://github.com/GuaiZai233/habit_journal"
+
+private fun sectionDepth(section: SettingsSection?): Int {
+    return when (section) {
+        null -> 0
+        SettingsSection.SERVER -> 1
+        SettingsSection.EXPORT -> 1
+        SettingsSection.ABOUT -> 1
+        SettingsSection.LICENSES -> 2
+    }
+}
 private val SaveSuccessGreen = Color(0xFF2E7D32)
+
+private data class OpenSourceNotice(
+    val name: String,
+    val license: String,
+)
+
+private val OpenSourceNotices = listOf(
+    OpenSourceNotice("AndroidX Core / Lifecycle / Activity / Navigation", "Apache-2.0"),
+    OpenSourceNotice("Jetpack Compose UI / Material3 / Material Icons", "Apache-2.0"),
+    OpenSourceNotice("Kotlin Coroutines", "Apache-2.0"),
+    OpenSourceNotice("Kotlinx Serialization", "Apache-2.0"),
+    OpenSourceNotice("Hilt (Dagger)", "Apache-2.0"),
+    OpenSourceNotice("Room", "Apache-2.0"),
+    OpenSourceNotice("DataStore", "Apache-2.0"),
+    OpenSourceNotice("OkHttp", "Apache-2.0"),
+)
 
 @Composable
 fun SettingsScreen(
@@ -55,6 +83,7 @@ fun SettingsScreen(
     onSaveServerUrl: (String) -> Unit,
     onExportCsv: () -> Unit,
 ) {
+    val uriHandler = LocalUriHandler.current
     var selectedSection by rememberSaveable { mutableStateOf<SettingsSection?>(null) }
 
     BackHandler(enabled = selectedSection != null) {
@@ -64,9 +93,9 @@ fun SettingsScreen(
     AnimatedContent(
         targetState = selectedSection,
         transitionSpec = {
-            val openingDetail = initialState == null && targetState != null
-            val enterFrom = if (openingDetail) 1 else -1
-            val exitTo = if (openingDetail) -1 else 1
+            val movingForward = sectionDepth(targetState) > sectionDepth(initialState)
+            val enterFrom = if (movingForward) 1 else -1
+            val exitTo = if (movingForward) -1 else 1
 
             (slideInHorizontally(
                 animationSpec = tween(280),
@@ -90,6 +119,7 @@ fun SettingsScreen(
                     SettingsSection.SERVER -> "服务器设置"
                     SettingsSection.EXPORT -> "导出"
                     SettingsSection.ABOUT -> "关于"
+                    SettingsSection.LICENSES -> "许可证"
                 },
             ) {
                 when (currentSection) {
@@ -147,8 +177,35 @@ fun SettingsScreen(
                     }
 
                     SettingsSection.ABOUT -> {
-                        Text("开源许可证：MPL-2.0")
-                        Text("GitHub：$PROJECT_GITHUB_URL")
+                        SettingsMenuCard(
+                            title = "项目地址",
+                            description = PROJECT_GITHUB_URL,
+                            onClick = { uriHandler.openUri(PROJECT_GITHUB_URL) },
+                        )
+                        SettingsMenuCard(
+                            title = "许可证",
+                            description = "查看本项目与第三方组件许可声明",
+                            onClick = { selectedSection = SettingsSection.LICENSES },
+                        )
+                    }
+
+                    SettingsSection.LICENSES -> {
+                        Text("本项目许可证：MPL-2.0", style = MaterialTheme.typography.titleSmall)
+                        Text(
+                            "下列第三方开源项目及组件按其各自许可证分发：",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        OpenSourceNotices.forEach { notice ->
+                            Card(modifier = Modifier.fillMaxWidth()) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(notice.name, style = MaterialTheme.typography.bodyMedium)
+                                    Text("许可证：${notice.license}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -183,7 +240,7 @@ private fun SettingsMenu(
         )
         SettingsMenuCard(
             title = "关于",
-            description = "查看许可证和项目信息",
+            description = "查看项目信息与许可证",
             onClick = onOpenAbout,
         )
     }
