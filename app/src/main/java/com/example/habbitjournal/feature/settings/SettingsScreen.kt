@@ -2,7 +2,6 @@ package com.example.habbitjournal.feature.settings
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.dp
 
 private enum class SettingsSection {
     SERVER,
-    SYNC,
     EXPORT,
     ABOUT,
 }
@@ -55,7 +53,6 @@ private val SaveSuccessGreen = Color(0xFF2E7D32)
 fun SettingsScreen(
     uiState: SettingsUiState,
     onSaveServerUrl: (String) -> Unit,
-    onSyncNow: () -> Unit,
     onExportCsv: () -> Unit,
 ) {
     var selectedSection by rememberSaveable { mutableStateOf<SettingsSection?>(null) }
@@ -84,7 +81,6 @@ fun SettingsScreen(
         if (currentSection == null) {
             SettingsMenu(
                 onOpenServer = { selectedSection = SettingsSection.SERVER },
-                onOpenSync = { selectedSection = SettingsSection.SYNC },
                 onOpenExport = { selectedSection = SettingsSection.EXPORT },
                 onOpenAbout = { selectedSection = SettingsSection.ABOUT },
             )
@@ -92,7 +88,6 @@ fun SettingsScreen(
             SettingsDetailLayout(
                 title = when (currentSection) {
                     SettingsSection.SERVER -> "服务器设置"
-                    SettingsSection.SYNC -> "同步设置"
                     SettingsSection.EXPORT -> "导出"
                     SettingsSection.ABOUT -> "关于"
                 },
@@ -141,15 +136,6 @@ fun SettingsScreen(
                         }
                     }
 
-                    SettingsSection.SYNC -> {
-                        Button(onClick = onSyncNow, modifier = Modifier.fillMaxWidth()) {
-                            Text("立即同步")
-                        }
-                        if (uiState.syncMessage.isNotBlank()) {
-                            Text(uiState.syncMessage)
-                        }
-                    }
-
                     SettingsSection.EXPORT -> {
                         Button(onClick = onExportCsv, modifier = Modifier.fillMaxWidth()) {
                             Text("导出 CSV")
@@ -173,7 +159,6 @@ fun SettingsScreen(
 @Composable
 private fun SettingsMenu(
     onOpenServer: () -> Unit,
-    onOpenSync: () -> Unit,
     onOpenExport: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -190,11 +175,6 @@ private fun SettingsMenu(
             title = "服务器设置",
             description = "配置服务器地址",
             onClick = onOpenServer,
-        )
-        SettingsMenuCard(
-            title = "同步设置",
-            description = "手动触发云端同步并查看结果",
-            onClick = onOpenSync,
         )
         SettingsMenuCard(
             title = "导出",

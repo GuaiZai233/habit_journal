@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 fun HomeScreen(
     uiState: HomeUiState,
     onAddTodayLog: () -> Unit,
+    onSyncNow: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -34,6 +35,16 @@ fun HomeScreen(
         }
         Button(onClick = onAddTodayLog, modifier = Modifier.fillMaxWidth()) {
             Text("今天完成 +1")
+        }
+        Button(
+            onClick = onSyncNow,
+            enabled = !uiState.isSyncing,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(if (uiState.isSyncing) "同步中..." else "立即同步")
+        }
+        if (uiState.syncMessage.isNotBlank()) {
+            Text(uiState.syncMessage)
         }
     }
 }

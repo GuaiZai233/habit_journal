@@ -129,7 +129,11 @@ fun AppNavRoot() {
             ) {
                 val vm: HomeViewModel = hiltViewModel()
                 val uiState = vm.uiState.collectAsStateWithLifecycle()
-                HomeScreen(uiState = uiState.value, onAddTodayLog = vm::addTodayLog)
+                HomeScreen(
+                    uiState = uiState.value,
+                    onAddTodayLog = vm::addTodayLog,
+                    onSyncNow = vm::syncNow,
+                )
             }
             composable(
                 route = RootTab.CALENDAR.route,
@@ -158,7 +162,6 @@ fun AppNavRoot() {
                 SettingsScreen(
                     uiState = uiState.value,
                     onSaveServerUrl = vm::saveServerUrl,
-                    onSyncNow = vm::syncNow,
                     onExportCsv = vm::exportCsv,
                 )
             }
