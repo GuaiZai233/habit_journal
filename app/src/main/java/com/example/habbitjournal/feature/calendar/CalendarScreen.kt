@@ -1,10 +1,15 @@
 package com.example.habbitjournal.feature.calendar
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,8 +30,10 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,17 +110,29 @@ fun CalendarScreen(
             )
         }
 
-        if (uiState.selectedDate != null) {
+        val showEditor = uiState.selectedDate != null
+        var editorDate by remember { mutableStateOf(LocalDate.now()) }
+        var editorCount by remember { mutableStateOf(0) }
+        
+        LaunchedEffect(uiState.selectedDate, uiState.selectedDateCount) {
+            if (uiState.selectedDate != null) {
+                editorDate = uiState.selectedDate
+                editorCount = uiState.selectedDateCount
+            }
+        }
+
+        AnimatedVisibility(
+            visible = showEditor,
+            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut(),
+        ) {
             SelectedDateEditor(
-                selectedDate = uiState.selectedDate,
-                count = uiState.selectedDateCount,
+                selectedDate = editorDate,
+                count = if (showEditor) uiState.selectedDateCount else editorCount,
                 onIncreaseCount = onIncreaseCount,
                 onDecreaseCount = onDecreaseCount,
                 onUpdateCount = onUpdateCount,
-                onSaveCount = {
-                    onSaveCount()
-                    onClearSelection()
-                },
+                onSaveCount = onSaveCount,
                 onCancel = onClearSelection,
             )
         }
