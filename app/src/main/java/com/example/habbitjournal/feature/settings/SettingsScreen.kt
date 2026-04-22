@@ -1,6 +1,13 @@
 package com.example.habbitjournal.feature.settings
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,94 +64,108 @@ fun SettingsScreen(
         selectedSection = null
     }
 
-    if (selectedSection == null) {
-        SettingsMenu(
-            onOpenServer = { selectedSection = SettingsSection.SERVER },
-            onOpenSync = { selectedSection = SettingsSection.SYNC },
-            onOpenExport = { selectedSection = SettingsSection.EXPORT },
-            onOpenAbout = { selectedSection = SettingsSection.ABOUT },
-        )
-        return
-    }
+    AnimatedContent(
+        targetState = selectedSection,
+        transitionSpec = {
+            val openingDetail = initialState == null && targetState != null
+            val enterFrom = if (openingDetail) 1 else -1
+            val exitTo = if (openingDetail) -1 else 1
 
-    SettingsDetailLayout(
-        title = when (selectedSection) {
-            SettingsSection.SERVER -> "服务器设置"
-            SettingsSection.SYNC -> "同步设置"
-            SettingsSection.EXPORT -> "导出"
-            SettingsSection.ABOUT -> "关于"
-            null -> "设置"
+            (slideInHorizontally(
+                animationSpec = tween(280),
+                initialOffsetX = { fullWidth -> fullWidth * enterFrom },
+            ) togetherWith slideOutHorizontally(
+                animationSpec = tween(280),
+                targetOffsetX = { fullWidth -> fullWidth * exitTo },
+            )).using(SizeTransform(clip = false))
         },
-    ) {
-        when (selectedSection) {
-            SettingsSection.SERVER -> {
-                var serverUrl by remember(uiState.serverUrl) { mutableStateOf(uiState.serverUrl) }
+        label = "settings-section-switch",
+    ) { currentSection ->
+        if (currentSection == null) {
+            SettingsMenu(
+                onOpenServer = { selectedSection = SettingsSection.SERVER },
+                onOpenSync = { selectedSection = SettingsSection.SYNC },
+                onOpenExport = { selectedSection = SettingsSection.EXPORT },
+                onOpenAbout = { selectedSection = SettingsSection.ABOUT },
+            )
+        } else {
+            SettingsDetailLayout(
+                title = when (currentSection) {
+                    SettingsSection.SERVER -> "服务器设置"
+                    SettingsSection.SYNC -> "同步设置"
+                    SettingsSection.EXPORT -> "导出"
+                    SettingsSection.ABOUT -> "关于"
+                },
+            ) {
+                when (currentSection) {
+                    SettingsSection.SERVER -> {
+                        var serverUrl by remember(uiState.serverUrl) { mutableStateOf(uiState.serverUrl) }
 
-                OutlinedTextField(
-                    value = serverUrl,
-                    onValueChange = { serverUrl = it },
-                    label = { Text("服务器地址") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-
-                Button(
-                    onClick = { onSaveServerUrl(serverUrl) },
-                    enabled = !uiState.isSavingServer,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    if (uiState.isSavingServer) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White,
+                        OutlinedTextField(
+                            value = serverUrl,
+                            onValueChange = { serverUrl = it },
+                            label = { Text("服务器地址") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text("检测连通性...")
-                    } else {
-                        Text("确认")
+
+                        Button(
+                            onClick = { onSaveServerUrl(serverUrl) },
+                            enabled = !uiState.isSavingServer,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            if (uiState.isSavingServer) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(18.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White,
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text("检测连通性...")
+                            } else {
+                                Text("确认")
+                            }
+                        }
+
+                        if (uiState.serverSaveMessage.isNotBlank()) {
+                            val color = when (uiState.serverSaveSucceeded) {
+                                true -> SaveSuccessGreen
+                                false -> MaterialTheme.colorScheme.error
+                                null -> MaterialTheme.colorScheme.onSurface
+                            }
+                            Text(
+                                uiState.serverSaveMessage,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = color,
+                            )
+                        }
+                    }
+
+                    SettingsSection.SYNC -> {
+                        Button(onClick = onSyncNow, modifier = Modifier.fillMaxWidth()) {
+                            Text("立即同步")
+                        }
+                        if (uiState.syncMessage.isNotBlank()) {
+                            Text(uiState.syncMessage)
+                        }
+                    }
+
+                    SettingsSection.EXPORT -> {
+                        Button(onClick = onExportCsv, modifier = Modifier.fillMaxWidth()) {
+                            Text("导出 CSV")
+                        }
+                        if (uiState.csvContent.isNotBlank()) {
+                            Text("CSV 内容（可复制）：", style = MaterialTheme.typography.titleSmall)
+                            Text(uiState.csvContent, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+
+                    SettingsSection.ABOUT -> {
+                        Text("开源许可证：MPL-2.0")
+                        Text("GitHub：$PROJECT_GITHUB_URL")
                     }
                 }
-
-                if (uiState.serverSaveMessage.isNotBlank()) {
-                    val color = when (uiState.serverSaveSucceeded) {
-                        true -> SaveSuccessGreen
-                        false -> MaterialTheme.colorScheme.error
-                        null -> MaterialTheme.colorScheme.onSurface
-                    }
-                    Text(
-                        uiState.serverSaveMessage,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = color,
-                    )
-                }
             }
-
-            SettingsSection.SYNC -> {
-                Button(onClick = onSyncNow, modifier = Modifier.fillMaxWidth()) {
-                    Text("立即同步")
-                }
-                if (uiState.syncMessage.isNotBlank()) {
-                    Text(uiState.syncMessage)
-                }
-            }
-
-            SettingsSection.EXPORT -> {
-                Button(onClick = onExportCsv, modifier = Modifier.fillMaxWidth()) {
-                    Text("导出 CSV")
-                }
-                if (uiState.csvContent.isNotBlank()) {
-                    Text("CSV 内容（可复制）：", style = MaterialTheme.typography.titleSmall)
-                    Text(uiState.csvContent, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-
-            SettingsSection.ABOUT -> {
-                Text("开源许可证：MPL-2.0")
-                Text("GitHub：$PROJECT_GITHUB_URL")
-            }
-
-            null -> Unit
         }
     }
 }
