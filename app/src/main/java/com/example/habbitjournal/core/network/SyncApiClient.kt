@@ -10,6 +10,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -31,7 +32,20 @@ data class HealthResponse(val status: String)
 
 @Singleton
 class SyncApiClient @Inject constructor() {
-    private val client = OkHttpClient()
+    companion object {
+        private const val CONNECT_TIMEOUT_SECONDS = 10L
+        private const val READ_TIMEOUT_SECONDS = 20L
+        private const val WRITE_TIMEOUT_SECONDS = 20L
+        private const val CALL_TIMEOUT_SECONDS = 30L
+    }
+
+    private val client = OkHttpClient.Builder()
+        .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .callTimeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .build()
+
     private val json = Json { ignoreUnknownKeys = true }
 
     suspend fun checkHealth(serverUrl: String): HealthResponse = withContext(Dispatchers.IO) {

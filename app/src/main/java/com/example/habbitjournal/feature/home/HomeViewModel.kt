@@ -52,9 +52,16 @@ class HomeViewModel @Inject constructor(
     fun syncNow() {
         viewModelScope.launch {
             _uiState.update { it.copy(isSyncing = true, syncMessage = "") }
-            val serverUrl = settingsDataStore.serverUrl.first()
-            val message = repository.sync(serverUrl)
-            _uiState.update { it.copy(isSyncing = false, syncMessage = message) }
+            try {
+                val serverUrl = settingsDataStore.serverUrl.first()
+                val message = repository.sync(serverUrl)
+                _uiState.update { it.copy(syncMessage = message) }
+            } catch (e: Exception) {
+                val detail = e.message?.takeIf { it.isNotBlank() } ?: e::class.java.simpleName
+                _uiState.update { it.copy(syncMessage = "同步失败：$detail") }
+            } finally {
+                _uiState.update { it.copy(isSyncing = false) }
+            }
         }
     }
 }
